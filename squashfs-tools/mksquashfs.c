@@ -77,6 +77,13 @@
 #include "restore.h"
 #include "process_fragments.h"
 
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+#include "android.h"
+int android_config = FALSE;
+#endif
+/* ANDROID CHANGES END */
+
 int delete = FALSE;
 int fd;
 struct squashfs_super_block sBlk;
@@ -3038,6 +3045,14 @@ inline void add_dir_entry(struct dir_ent *dir_ent, struct dir_info *sub_dir,
 
 	if(sub_dir)
 		sub_dir->dir_ent = dir_ent;
+
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+	if (android_config)
+		android_fs_config(pathname(dir_ent), &inode_info->buf);
+#endif
+/* ANDROID CHANGES END */
+
 	dir_ent->inode = inode_info;
 	dir_ent->dir = sub_dir;
 
@@ -3119,6 +3134,12 @@ void dir_scan(squashfs_inode *inode, char *pathname,
 			/* source directory has disappeared? */
 			BAD_ERROR("Cannot stat source directory %s because %s\n",
 				pathname, strerror(errno));
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+		if (android_config)
+			android_fs_config(pathname, &buf);
+#endif
+/* ANDROID CHANGES END */
 		dir_ent->inode = lookup_inode(&buf);
 	}
 
@@ -5535,6 +5556,12 @@ print_compressor_options:
 
 		else if(strcmp(argv[i], "-keep-as-directory") == 0)
 			keep_as_directory = TRUE;
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+		else if(strcmp(argv[i], "-android-fs-config") == 0)
+			android_config = TRUE;
+#endif
+/* ANDROID CHANGES END */
 
 		else if(strcmp(argv[i], "-exit-on-error") == 0)
 			exit_on_error = TRUE;
@@ -5589,6 +5616,12 @@ printOptions:
 			ERROR("\t\t\tdirectory containing that directory, "
 				"rather than the\n");
 			ERROR("\t\t\tcontents of the directory\n");
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+			ERROR("-android-fs-config\tuse android fs config "
+				"for mode, uid, and gids of inodes\n");
+#endif
+/* ANDROID CHANGES END */
 			ERROR("\nFilesystem filter options:\n");
 			ERROR("-p <pseudo-definition>\tAdd pseudo file "
 				"definition\n");
