@@ -81,6 +81,7 @@
 #ifdef ANDROID
 #include "android.h"
 int android_config = FALSE;
+char *context_file = NULL;
 #endif
 /* ANDROID CHANGES END */
 
@@ -5542,6 +5543,18 @@ print_compressor_options:
 		else if(strcmp(argv[i], "-xattrs") == 0)
 			no_xattrs = FALSE;
 
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+		else if(strcmp(argv[i], "-context-file") == 0) {
+			if(++i == argc) {
+				ERROR("%s: -context-file: missing file name\n",
+					argv[0]);
+				exit(1);
+			}
+			context_file = argv[i];
+		}
+#endif
+/* ANDROID CHANGES END */
 		else if(strcmp(argv[i], "-nopad") == 0)
 			nopad = TRUE;
 
@@ -5596,6 +5609,13 @@ printOptions:
 				NOXOPT_STR "\n");
 			ERROR("-xattrs\t\t\tstore extended attributes" XOPT_STR
 				"\n");
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+			ERROR("-context-file <file>\tApply selinux security "
+				"xattrs from context-file instead\n\t\t\t"
+				"of reading xattrs from file system\n");
+#endif
+/* ANDROID CHANGES END */
 			ERROR("-noI\t\t\tdo not compress inode table\n");
 			ERROR("-noD\t\t\tdo not compress data blocks\n");
 			ERROR("-noF\t\t\tdo not compress fragment blocks\n");

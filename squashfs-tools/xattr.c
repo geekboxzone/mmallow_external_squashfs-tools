@@ -43,6 +43,13 @@
 #include "error.h"
 #include "progressbar.h"
 
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+#include "android.h"
+static struct selabel_handle *sehnd = NULL;
+#endif
+/* ANDROID CHANGES END */
+
 /* compressed xattr table */
 static char *xattr_table = NULL;
 static unsigned int xattr_size = 0;
@@ -76,6 +83,9 @@ extern int no_xattrs, noX;
 extern long long bytes;
 extern int fd;
 extern unsigned int xattr_bytes, total_xattr_bytes;
+/* ANDROID CHANGES START*/
+extern char *context_file;
+/* ANDROID CHANGES END */
 
 /* helper functions from mksquashfs.c */
 extern unsigned short get_checksum(char *, int, unsigned short);
@@ -110,7 +120,28 @@ static int get_prefix(struct xattr_list *xattr, char *name)
 	return prefix_table[i].type;
 }
 
-	
+
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+static int read_xattrs_from_context_file(char *filename, int mode,
+	struct selabel_handle *sehnd, struct xattr_list **xattrs)
+{
+	char *attr_val;
+	struct xattr_list *x = malloc(sizeof(*x));
+	if(x == NULL)
+		MEM_ERROR();
+
+	x->type = get_prefix(x, "security.selinux");
+	attr_val = set_selabel(filename, mode, sehnd);
+	x->value = (void *)attr_val;
+	x->vsize = strlen(attr_val);
+	*xattrs = x;
+	return 1;
+}
+#endif
+/* ANDROID CHANGES END */
+
+
 static int read_xattrs_from_system(char *filename, struct xattr_list **xattrs)
 {
 	ssize_t size, vsize;
@@ -614,7 +645,21 @@ int read_xattrs(void *d)
 	if(no_xattrs || IS_PSEUDO(inode) || inode->root_entry)
 		return SQUASHFS_INVALID_XATTR;
 
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+	if (context_file) {
+		if (sehnd == NULL)
+			sehnd = get_sehnd(context_file);
+		xattrs = read_xattrs_from_context_file(filename, inode->buf.st_mode,
+				sehnd, &xattr_list);
+	} else {
+		xattrs = read_xattrs_from_system(filename, &xattr_list);
+	}
+#else
 	xattrs = read_xattrs_from_system(filename, &xattr_list);
+#endif
+/* ANDROID CHANGES END */
+
 	if(xattrs == 0)
 		return SQUASHFS_INVALID_XATTR;
 

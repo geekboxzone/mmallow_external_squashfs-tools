@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
-#include <private/android_filesystem_config.h>
+#ifndef _ANDROID_H_
+#define _ANDROID_H_
 
-void android_fs_config(char* path, struct stat* stat);
+void android_fs_config(const char *path, struct stat *stat);
+struct selabel_handle *get_sehnd(const char *context_file);
+char *set_selabel(const char *path, unsigned int mode, struct selabel_handle *sehnd);
+
+#endif
