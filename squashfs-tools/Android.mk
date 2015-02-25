@@ -50,22 +50,23 @@ gzip_wrapper_files := gzip_wrapper.c squashfs_fs.h gzip_wrapper.h compressor.h
 
 android_files := android.c android.h
 
-# TODO: Uncomment and include when lz4 source is running.
-# lz4_wrapper_files := lz4_wrapper.c squashfs_fs.h lz4_wrapper.h compressor.h
+lz4_wrapper_files := lz4_wrapper.c squashfs_fs.h lz4_wrapper.h compressor.h
 
 LOCAL_SRC_FILES := $(mksquashfs_files) $(read_fs_files) $(action_files) $(swap_files) \
                    $(pseudo_files) $(compressor_files) $(sort_files) $(progressbar_files) \
                    $(read_file_files) $(info_files) $(restore_files) \
                    $(process_fragments_files) $(caches_queues_lists_files) $(xattr_files) \
-                   $(read_xattrs_files) $(gzip_wrapper_files) $(android_files)
+                   $(read_xattrs_files) $(gzip_wrapper_files) $(android_files) \
+                   $(lz4_wrapper_files)
 
-# TODO: Replace gzip with lz4 support once lz4 lib is running.
 LOCAL_CFLAGS := -I -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_GNU_SOURCE -Wall \
-                -DCOMP_DEFAULT="\"gzip\"" -DGZIP_SUPPORT -DXATTR_SUPPORT -DXATTR_DEFAULT
+                -DCOMP_DEFAULT="\"lz4\"" -DGZIP_SUPPORT -DLZ4_SUPPORT -DXATTR_SUPPORT -DXATTR_DEFAULT
 
 LOCAL_LDLIBS := -lpthread -lm -lz
 
-LOCAL_STATIC_LIBRARIES := libselinux
+LOCAL_C_INCLUDES := external/lz4/lib
+
+LOCAL_STATIC_LIBRARIES := libselinux liblz4
 
 LOCAL_MODULE_TAGS := optional
 
