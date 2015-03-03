@@ -85,6 +85,7 @@ extern int fd;
 extern unsigned int xattr_bytes, total_xattr_bytes;
 /* ANDROID CHANGES START*/
 extern char *context_file;
+extern char *mount_point;
 /* ANDROID CHANGES END */
 
 /* helper functions from mksquashfs.c */
@@ -93,6 +94,11 @@ extern void write_destination(int, long long, int, void *);
 extern long long generic_write_table(int, void *, int, void *, int);
 extern int mangle(char *, char *, int, int, int, int);
 extern char *pathname(struct dir_ent *);
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+extern char *subpathname(struct dir_ent *);
+#endif
+/* ANDROID CHANGES END */
 
 /* helper functions and definitions from read_xattrs.c */
 extern int read_xattrs_from_disk(int, struct squashfs_super_block *);
@@ -650,8 +656,16 @@ int read_xattrs(void *d)
 	if (context_file) {
 		if (sehnd == NULL)
 			sehnd = get_sehnd(context_file);
-		xattrs = read_xattrs_from_context_file(filename, inode->buf.st_mode,
-				sehnd, &xattr_list);
+		if (mount_point) {
+			char *mounted_path;
+			alloc_mounted_path(mount_point, subpathname(dir_ent), &mounted_path);
+			xattrs = read_xattrs_from_context_file(mounted_path, inode->buf.st_mode,
+					sehnd, &xattr_list);
+			free(mounted_path);
+		} else {
+			xattrs = read_xattrs_from_context_file(filename, inode->buf.st_mode,
+					sehnd, &xattr_list);
+		}
 	} else {
 		xattrs = read_xattrs_from_system(filename, &xattr_list);
 	}

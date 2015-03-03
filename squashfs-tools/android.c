@@ -33,6 +33,16 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+void alloc_mounted_path(const char *mount_point, const char *subpath, char **mounted_path) {
+    *mounted_path = malloc(strlen(mount_point) + strlen(subpath) + 1);
+    if (*mounted_path == NULL) {
+        perror("Malloc Failure.");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(*mounted_path, mount_point);
+    strcat(*mounted_path, subpath);
+}
+
 void android_fs_config(const char *path, struct stat *stat) {
     unsigned long capabilities = 0;
     fs_config(path, S_ISDIR(stat->st_mode), &stat->st_uid, &stat->st_gid, &stat->st_mode,
