@@ -82,6 +82,7 @@
 #include "android.h"
 int android_config = FALSE;
 char *context_file = NULL;
+char *mount_point = NULL;
 #endif
 /* ANDROID CHANGES END */
 
@@ -3049,8 +3050,16 @@ inline void add_dir_entry(struct dir_ent *dir_ent, struct dir_info *sub_dir,
 
 /* ANDROID CHANGES START*/
 #ifdef ANDROID
-	if (android_config)
-		android_fs_config(pathname(dir_ent), &inode_info->buf);
+	if (android_config) {
+		if (mount_point) {
+			char *mounted_path;
+			alloc_mounted_path(mount_point, subpathname(dir_ent), &mounted_path);
+			android_fs_config(mounted_path, &inode_info->buf);
+			free(mounted_path);
+		} else {
+			android_fs_config(pathname(dir_ent), &inode_info->buf);
+		}
+	}
 #endif
 /* ANDROID CHANGES END */
 
@@ -3062,6 +3071,16 @@ inline void add_dir_entry(struct dir_ent *dir_ent, struct dir_info *sub_dir,
 	dir->count++;
 }
 
+/* ANDROID CHANGES START*/
+#ifdef ANDROID
+/* Weird linker bug that complains those inline functions are undefined. */
+extern inline void add_dir_entry(struct dir_ent *dir_ent, struct dir_info *sub_dir,
+	struct inode_info *inode_info);
+extern inline void add_dir_entry2(char *name, char *source_name,
+	char *nonstandard_pathname, struct dir_info *sub_dir,
+	struct inode_info *inode_info, struct dir_info *dir);
+#endif
+/* ANDROID CHANGES END */
 
 inline void add_dir_entry2(char *name, char *source_name,
 	char *nonstandard_pathname, struct dir_info *sub_dir,
@@ -3138,7 +3157,10 @@ void dir_scan(squashfs_inode *inode, char *pathname,
 /* ANDROID CHANGES START*/
 #ifdef ANDROID
 		if (android_config)
-			android_fs_config(pathname, &buf);
+			if (mount_point)
+				android_fs_config(mount_point, &buf);
+			else
+				android_fs_config(pathname, &buf);
 #endif
 /* ANDROID CHANGES END */
 		dir_ent->inode = lookup_inode(&buf);
@@ -5573,6 +5595,14 @@ print_compressor_options:
 #ifdef ANDROID
 		else if(strcmp(argv[i], "-android-fs-config") == 0)
 			android_config = TRUE;
+		else if(strcmp(argv[i], "-mount-point") == 0) {
+			if(++i == argc) {
+				ERROR("%s: -mount-point: missing mount point name\n",
+					argv[0]);
+				exit(1);
+			}
+			mount_point = argv[i];
+		}
 #endif
 /* ANDROID CHANGES END */
 
@@ -5640,6 +5670,9 @@ printOptions:
 #ifdef ANDROID
 			ERROR("-android-fs-config\tuse android fs config "
 				"for mode, uid, and gids of inodes\n");
+			ERROR("-mount-point <name>\tNeed to be provided when "
+				"android-fs-config or context-file\n\t\t\tare "
+				"enabled and source directory is not mount point\n");
 #endif
 /* ANDROID CHANGES END */
 			ERROR("\nFilesystem filter options:\n");

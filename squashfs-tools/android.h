@@ -17,6 +17,7 @@
 #ifndef _ANDROID_H_
 #define _ANDROID_H_
 
+void alloc_mounted_path(const char *mount_point, const char *subpath, char **mounted_path);
 void android_fs_config(const char *path, struct stat *stat);
 struct selabel_handle *get_sehnd(const char *context_file);
 char *set_selabel(const char *path, unsigned int mode, struct selabel_handle *sehnd);
