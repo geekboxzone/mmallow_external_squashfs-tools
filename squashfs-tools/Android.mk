@@ -66,7 +66,7 @@ LOCAL_LDLIBS := -lpthread -lm -lz
 
 LOCAL_C_INCLUDES := external/lz4/lib
 
-LOCAL_STATIC_LIBRARIES := libcutils liblz4 libselinux
+LOCAL_STATIC_LIBRARIES := libcutils liblog liblz4 libselinux
 
 LOCAL_MODULE_TAGS := optional
 
